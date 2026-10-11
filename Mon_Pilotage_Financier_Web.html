@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b32">
+<title>Mon Pilotage Financier</title>
+<style>
+:root{--green:#123b32;--green2:#1d6a55;--mint:#e8f5ef;--bg:#f4f7f5;--ink:#172a25;--muted:#65746e;--line:#e1e9e4;--white:#fff;--red:#b63b3b;--orange:#a85b12;--shadow:0 8px 24px rgba(17,55,43,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:12px;padding:11px 14px;font-weight:650}
+.app{max-width:1180px;margin:auto;padding:16px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:11px}.logo{background:var(--green);color:white;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px}.brand h1{font-size:20px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.primary{background:var(--green);color:#fff}.secondary{background:#e5eee9;color:var(--green)}.plain{background:white;color:var(--ink);border:1px solid var(--line)}
+.nav{display:flex;gap:7px;overflow:auto;padding:4px 0 14px}.nav button{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid transparent}.nav button.active{background:var(--green);color:#fff}
+.panel{display:none}.panel.active{display:block}.filters,.card,.section{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px}.field{display:flex;flex-direction:column;gap:5px;min-width:0}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid #d5e0d9;border-radius:10px;background:white;color:var(--ink);min-width:0}.field textarea{min-height:76px;resize:vertical}.filters .field{min-width:135px;flex:1}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.kpi{padding:16px;border-radius:18px;background:white;border:1px solid var(--line);box-shadow:var(--shadow)}.kpi .label{color:var(--muted);font-size:12px;font-weight:700}.kpi .value{font-size:clamp(18px,2.5vw,25px);font-weight:800;margin-top:6px;overflow-wrap:anywhere}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}.green{color:var(--green2)}.red{color:var(--red)}.orange{color:var(--orange)}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.section h2{font-size:16px;margin:0 0 12px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}.section-head h2{margin:0}
+.bars{display:grid;gap:12px}.barrow{display:grid;grid-template-columns:100px 1fr 100px;gap:8px;align-items:center;font-size:13px}.track{height:10px;border-radius:99px;background:#edf2ef;overflow:hidden}.fill{height:100%;border-radius:99px;background:var(--green2)}.fill.exp{background:#d58b45}
+.tip{background:var(--mint);border-radius:14px;padding:12px;color:var(--green);font-size:13px;margin-top:12px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}.form-actions{display:flex;gap:8px;flex-wrap:wrap}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{width:100%;border-collapse:collapse;min-width:620px;background:white}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);font-size:13px}th{background:#f3f7f4;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0}tr:last-child td{border-bottom:0}.amount{font-weight:750;white-space:nowrap}.pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#edf2ef;font-size:11px;font-weight:700}.pill.rev{background:#e0f2e8;color:#176044}.pill.dep{background:#fce8e5;color:#a43131}.pill.prev{background:#fff0d9;color:#8a510b}.empty{padding:28px;text-align:center;color:var(--muted)}.delete{background:#fff0ef;color:#a43131;padding:7px 9px}.small{font-size:12px;color:var(--muted)}.project-list{display:grid;gap:10px}.project{border:1px solid var(--line);border-radius:14px;padding:13px}.project-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.project h3{margin:0;font-size:15px}.project p{margin:4px 0;color:var(--muted);font-size:12px}.progress{height:8px;border-radius:99px;background:#edf2ef;overflow:hidden;margin:10px 0 6px}.progress div{height:100%;background:var(--green2)}
+.notice{padding:12px;border:1px solid #f0d6a8;background:#fff8e9;color:#76501d;border-radius:12px;font-size:13px;margin-bottom:14px}
+@media(max-width:760px){.app{padding:11px}.brand h1{font-size:18px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:13px}.grid2{grid-template-columns:1fr}.filters{padding:12px}.filters .field{min-width:calc(50% - 8px)}form{grid-template-columns:1fr}.full{grid-column:auto}.barrow{grid-template-columns:78px 1fr 85px}.actions button{padding:9px 11px}.top{align-items:flex-start}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+.auth-wrap{position:fixed;inset:0;background:rgba(10,30,24,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}.auth-card{background:white;border-radius:22px;padding:24px;width:min(440px,100%);box-shadow:0 25px 80px #0003}.auth-card h2{margin:0 0 6px;color:#123b32}.auth-card p{color:#65746e;font-size:13px}.auth-card .field{margin:12px 0}.auth-card input{width:100%;padding:12px;border:1px solid #d5e0d9;border-radius:10px}.auth-actions{display:flex;gap:8px;flex-wrap:wrap}.auth-error{color:#a43131;font-size:13px;min-height:18px}.account{font-size:12px;color:#65746e;align-self:center}
+</style>
+</head>
+<body>
+<div class="auth-wrap" id="authWrap"><div class="auth-card"><div class="brand"><div class="logo">↗</div><div><h1>Mon Pilotage Financier</h1><p>Accès personnel sécurisé · FCFA</p></div></div><h2 id="authTitle">Connexion</h2><p id="authHelp">Connectez-vous pour accéder à vos données synchronisées.</p><div class="field"><label for="authEmail">ADRESSE E-MAIL</label><input id="authEmail" type="email" autocomplete="email" placeholder="vous@exemple.com" required></div><div class="field"><label for="authPassword">MOT DE PASSE</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="8 caractères ou plus"></div><div class="auth-error" id="authError"></div><div class="auth-actions"><button class="primary" id="authSubmit">Se connecter</button><button class="secondary" id="authMode">Créer un compte</button></div><p><button class="plain" id="forgotPassword">Mot de passe oublié ?</button></p><p class="small">La connexion cloud doit d’abord être configurée par le propriétaire de l’application.</p></div></div>
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="logo">↗</div><div><h1>Mon Pilotage Financier</h1><p>Personnel + professionnel · FCFA</p></div></div>
+  <div class="actions"><span class="account" id="accountLabel">Mode hors connexion</span><button class="secondary" id="signOutBtn" style="display:none">Déconnexion</button><button class="secondary" id="exportBtn">Exporter une sauvegarde</button><button class="primary" id="addTop">+ Ajouter une opération</button></div>
+</header>
+<nav class="nav">
+  <button class="active" data-tab="dashboard">Vue d’ensemble</button><button data-tab="transactions">Opérations</button><button data-tab="projects">Mes projets</button><button data-tab="settings">Sauvegarde & aide</button>
+</nav>
+<div class="notice" id="syncNotice">Connexion cloud non configurée. Suivez le guide INSTALLATION.md pour activer la synchronisation sécurisée.</div>
+
+<section id="dashboard" class="panel active">
+  <div class="filters">
+    <div class="field"><label for="yearFilter">ANNÉE</label><select id="yearFilter"></select></div>
+    <div class="field"><label for="monthFilter">MOIS</label><select id="monthFilter"><option value="all">Tous les mois</option></select></div>
+    <div class="field"><label for="scopeFilter">PÉRIMÈTRE</label><select id="scopeFilter"><option value="all">Personnel + professionnel</option><option>Personnel</option><option>Professionnel</option></select></div>
+    <button class="plain" id="resetFilters">Réinitialiser</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">REVENUS RÉALISÉS</div><div class="value green" id="incomeTotal">0 FCFA</div><div class="sub">Entrées confirmées</div></div>
+    <div class="kpi"><div class="label">DÉPENSES RÉALISÉES</div><div class="value red" id="expenseTotal">0 FCFA</div><div class="sub">Sorties confirmées</div></div>
+    <div class="kpi"><div class="label">SOLDE DE LA PÉRIODE</div><div class="value" id="balanceTotal">0 FCFA</div><div class="sub">Revenus moins dépenses</div></div>
+    <div class="kpi"><div class="label">RESTE À FINANCER</div><div class="value orange" id="projectNeed">0 FCFA</div><div class="sub">Projets enregistrés</div></div>
+  </div>
+  <div class="grid2">
+    <div class="section"><h2>Revenus et dépenses par mois</h2><div id="monthlyBars" class="bars"></div></div>
+    <div class="section"><h2>Résumé de la période</h2><div id="summary"></div><div class="tip" id="tip">Ajoutez votre première opération pour commencer à voir vos données.</div></div>
+  </div>
+  <div class="section" style="margin-top:14px"><div class="section-head"><h2>Dernières opérations</h2><button class="secondary" data-goto="transactions">Voir toutes les opérations</button></div><div id="recentTable"></div></div>
+</section>
+
+<section id="transactions" class="panel">
+  <div class="section" style="margin-bottom:14px">
+    <div class="section-head"><h2 id="formTitle">Ajouter une opération</h2><span class="small">Montant en FCFA</span></div>
+    <form id="txForm">
+      <input type="hidden" id="txId">
+      <div class="field"><label for="txDate">DATE</label><input type="date" id="txDate" required></div>
+      <div class="field"><label for="txType">TYPE</label><select id="txType"><option>Revenu</option><option>Dépense</option></select></div>
+      <div class="field"><label for="txScope">PÉRIMÈTRE</label><select id="txScope"><option>Personnel</option><option>Professionnel</option></select></div>
+      <div class="field"><label for="txCategory">CATÉGORIE</label><select id="txCategory"></select></div>
+      <div class="field full"><label for="txTitle">LIBELLÉ / DESCRIPTION</label><input id="txTitle" placeholder="Ex. Vente, transport, facture Internet…" required></div>
+      <div class="field"><label for="txAmount">MONTANT (FCFA)</label><input type="number" id="txAmount" min="1" step="1" placeholder="Ex. 25000" required></div>
+      <div class="field"><label for="txStatus">STATUT</label><select id="txStatus"><option>Réalisé</option><option>Prévu</option><option>En attente</option></select></div>
+      <div class="field full"><label for="txNote">NOTE (facultatif)</label><textarea id="txNote" placeholder="Détails utiles, référence, échéance…"></textarea></div>
+      <div class="form-actions full"><button class="primary" type="submit">Enregistrer</button><button class="plain" type="button" id="cancelEdit">Effacer le formulaire</button></div>
+    </form>
+  </div>
+  <div class="section"><div class="section-head"><h2>Historique des opérations</h2><span class="small" id="txCount">0 opération</span></div>
+    <div class="filters" style="padding:0;border:0;box-shadow:none;margin-bottom:12px">
+      <div class="field"><label for="searchTx">RECHERCHER</label><input id="searchTx" placeholder="Libellé ou catégorie…"></div>
+      <div class="field"><label for="typeTxFilter">TYPE</label><select id="typeTxFilter"><option value="all">Tous</option><option>Revenu</option><option>Dépense</option></select></div>
+      <div class="field"><label for="statusTxFilter">STATUT</label><select id="statusTxFilter"><option value="all">Tous</option><option>Réalisé</option><option>Prévu</option><option>En attente</option></select></div>
+    </div>
+    <div id="allTransactions"></div>
+  </div>
+</section>
+
+<section id="projects" class="panel">
+  <div class="section" style="margin-bottom:14px"><div class="section-head"><h2 id="projectFormTitle">Ajouter un projet</h2></div>
+    <form id="projectForm">
+      <input type="hidden" id="projectId">
+      <div class="field full"><label for="projectName">NOM DU PROJET</label><input id="projectName" placeholder="Ex. Acheter un ordinateur" required></div>
+      <div class="field"><label for="projectScope">PÉRIMÈTRE</label><select id="projectScope"><option>Personnel</option><option>Professionnel</option></select></div>
+      <div class="field"><label for="projectPriority">PRIORITÉ</label><select id="projectPriority"><option>Urgente</option><option selected>Importante</option><option>Secondaire</option></select></div>
+      <div class="field"><label for="projectBudget">BUDGET TOTAL (FCFA)</label><input type="number" id="projectBudget" min="0" step="1" required></div>
+      <div class="field"><label for="projectFunded">DÉJÀ FINANCÉ (FCFA)</label><input type="number" id="projectFunded" min="0" step="1" value="0" required></div>
+      <div class="field"><label for="projectDate">DATE CIBLE (facultatif)</label><input type="date" id="projectDate"></div>
+      <div class="field"><label for="projectStatus">STATUT</label><select id="projectStatus"><option>Idée</option><option>À étudier</option><option>En préparation</option><option>En cours</option><option>Terminé</option><option>Reporté</option></select></div>
+      <div class="field full"><label for="projectNote">PROCHAINES ÉTAPES</label><textarea id="projectNote" placeholder="Actions à réaliser, risques, échéances…"></textarea></div>
+      <div class="form-actions full"><button class="primary" type="submit">Enregistrer le projet</button><button class="plain" type="button" id="cancelProject">Effacer le formulaire</button></div>
+    </form>
+  </div>
+  <div class="section"><div class="section-head"><h2>Mon portefeuille de projets</h2><span class="small" id="projectCount">0 projet</span></div><div class="project-list" id="projectList"></div></div>
+</section>
+
+<section id="settings" class="panel">
+  <div class="section">
+    <h2>Sauvegarde et conservation</h2>
+    <p>Le système garde les données dans le navigateur de l’appareil. Pour conserver vos données longtemps et les utiliser sur plusieurs appareils, faites régulièrement une sauvegarde.</p>
+    <div class="actions" style="margin:14px 0"><button class="primary" id="exportBtn2">Télécharger ma sauvegarde</button><button class="secondary" id="importBtn">Importer une sauvegarde</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+    <div class="tip">Pour transférer vos données : sur le premier appareil, exportez le fichier JSON. Envoyez-le à votre autre appareil, ouvrez cette page, puis choisissez « Importer une sauvegarde ». L’importation remplace les données présentes dans cette application.</div>
+    <h2 style="margin-top:24px">Utilisation rapide</h2>
+    <ol>
+      <li>Dans <b>Opérations</b>, saisissez chaque revenu ou dépense dès qu’il survient.</li>
+      <li>Choisissez « Réalisé » pour une opération déjà effectuée, ou « Prévu » pour une estimation future.</li>
+      <li>Dans <b>Vue d’ensemble</b>, changez l’année, le mois et le périmètre pour filtrer les résultats.</li>
+      <li>Dans <b>Mes projets</b>, indiquez le budget et le montant déjà financé ; le reste à financer est calculé automatiquement.</li>
+      <li>Exportez régulièrement une sauvegarde et gardez-la dans Google Drive ou un autre espace sûr.</li>
+    </ol>
+    <h2 style="margin-top:24px">Réinitialiser</h2>
+    <p class="small">Attention : cette action efface les opérations et projets enregistrés dans ce navigateur. Exportez d’abord une sauvegarde.</p>
+    <button class="delete" id="clearAll">Effacer toutes mes données sur cet appareil</button>
+  </div>
+</section>
+</div>
+<script>
+const MONTHS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const CATS={
+ 'Revenu':['Salaire','Commerce / ventes','Formation / produits numériques','Commission','Loyers reçus','Prestation / service','Autres revenus'],
+ 'Dépense':['Logement','Alimentation','Transport','Factures / téléphone / Internet','Famille','Santé / hygiène','Éducation / formation','Loisirs','Activité professionnelle','Impôts / frais administratifs','Remboursement de dette','Achat important','Imprévus','Autre']
+};
+const fmt=n=>new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Number(n)||0)+' FCFA';
+const dateToday=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+let data={transactions:[],projects:[]};
+const $=id=>document.getElementById(id);
+// Renseigner ces deux valeurs après création du projet Supabase.
+const SUPABASE_URL='https://wucdwohenllysyxyyrhap.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_P4bUi7BvaWgnt52lSBGwfg_KVZUZSob';
+let sb=null, currentUser=null, authMode='login', cloudReady=false, savingTimer=null, remoteChannel=null;
+function cloudConfigured(){return SUPABASE_URL.startsWith('https://') && (SUPABASE_ANON_KEY.startsWith('eyJ') || SUPABASE_ANON_KEY.startsWith('sb_publishable_')) && !SUPABASE_URL.includes('COLLER_ICI') && !SUPABASE_ANON_KEY.includes('COLLER_ICI')}
+function setSyncMessage(msg,warning=false){const n=$('syncNotice');if(n){n.textContent=msg;n.style.background=warning?'#fff8e9':'var(--mint)';n.style.color=warning?'#76501d':'var(--green)'}}
+function setAuthError(msg){$('authError').textContent=msg||''}
+function showAuth(show){$('authWrap').style.display=show?'flex':'none'}
+function loadLocal(){try{const s=localStorage.getItem('pilotageFinancierV1');if(s){const p=JSON.parse(s);data={transactions:Array.isArray(p.transactions)?p.transactions:[],projects:Array.isArray(p.projects)?p.projects:[]}}}catch(e){console.warn(e)}}
+async function loadCloud(){if(!sb||!currentUser)return;setSyncMessage('Chargement de vos données sécurisées…');const {data:row,error}=await sb.from('user_finance_data').select('payload').eq('user_id',currentUser.id).maybeSingle();if(error){setSyncMessage('Erreur de lecture cloud : '+error.message,true);return}if(row?.payload){data={transactions:Array.isArray(row.payload.transactions)?row.payload.transactions:[],projects:Array.isArray(row.payload.projects)?row.payload.projects:[]}}else{data={transactions:[],projects:[]};await persistCloud()}cloudReady=true;renderAll();setSyncMessage('Synchronisé avec le cloud. Vos données sont liées à votre compte personnel.');subscribeRealtime()}
+async function persistCloud(){try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();if(sb&&currentUser&&cloudReady){clearTimeout(savingTimer);setSyncMessage('Synchronisation…');savingTimer=setTimeout(async()=>{const {error}=await sb.from('user_finance_data').upsert({user_id:currentUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)setSyncMessage('Synchronisation échouée : '+error.message,true);else setSyncMessage('Synchronisé · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));},250)}}
+function save(){persistCloud()}
+function subscribeRealtime(){if(!sb||!currentUser)return;if(remoteChannel)sb.removeChannel(remoteChannel);remoteChannel=sb.channel('finance-'+currentUser.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'user_finance_data',filter:'user_id=eq.'+currentUser.id},payload=>{if(!payload.new||!payload.new.payload)return;data={transactions:payload.new.payload.transactions||[],projects:payload.new.payload.projects||[]};try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();setSyncMessage('Mise à jour reçue depuis un autre appareil.')}).subscribe()}
+async function authStart(){if(!cloudConfigured()){showAuth(true);setAuthError('Configuration nécessaire : ouvrez app.js et remplacez l’URL Supabase et la clé publique.');$('authSubmit').disabled=true;$('authMode').disabled=true;return}sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){authMode='recovery';$('authTitle').textContent='Nouveau mot de passe';$('authHelp').textContent='Choisissez un nouveau mot de passe sécurisé.';$('authSubmit').textContent='Enregistrer le mot de passe';$('authMode').style.display='none';showAuth(true)}});const {data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;await afterLogin();}else showAuth(true);}
+async function afterLogin(){currentUser=(await sb.auth.getUser()).data.user;if(!currentUser)return;cloudReady=false;$('accountLabel').textContent=currentUser.email||'Compte connecté';$('signOutBtn').style.display='inline-block';showAuth(false);await loadCloud()}
+async function submitAuth(){setAuthError('');const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthError('Renseignez votre e-mail et votre mot de passe.');return}const btn=$('authSubmit');btn.disabled=true;try{let result;if(authMode==='recovery')result=await sb.auth.updateUser({password});else if(authMode==='signup')result=await sb.auth.signUp({email,password});else result=await sb.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(authMode==='recovery'){authMode='login';$('authMode').style.display='inline-block';$('authPassword').value='';setAuthError('Mot de passe modifié. Vous pouvez maintenant vous connecter.');$('authTitle').textContent='Connexion';$('authSubmit').textContent='Se connecter';}else if(authMode==='signup'&&!result.data.session){setAuthError('Compte créé. Vérifiez votre e-mail pour confirmer votre inscription, puis connectez-vous.')}else await afterLogin()}catch(e){setAuthError(e.message||'Connexion impossible. Vérifiez vos informations.')}finally{btn.disabled=false}}
+
+function setup(){
+ $('txDate').value=dateToday(); fillCategories();
+ MONTHS.forEach((m,i)=>$('monthFilter').add(new Option(m,m)));
+ const years=new Set([new Date().getFullYear()]); data.transactions.forEach(t=>{if(t.date)years.add(+t.date.slice(0,4))}); 
+ [...years].sort((a,b)=>b-a).forEach(y=>$('yearFilter').add(new Option(y,y)));
+ $('yearFilter').value=String(new Date().getFullYear());
+ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+ document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.goto)));
+ ['yearFilter','monthFilter','scopeFilter'].forEach(id=>$(id).addEventListener('change',renderDashboard));
+ ['searchTx','typeTxFilter','statusTxFilter'].forEach(id=>$(id).addEventListener('input',renderTransactions));
+ $('txType').addEventListener('change',fillCategories);
+ $('txForm').addEventListener('submit',submitTx); $('cancelEdit').addEventListener('click',resetTx);
+ $('projectForm').addEventListener('submit',submitProject); $('cancelProject').addEventListener('click',resetProject);
+ $('addTop').addEventListener('click',()=>{switchTab('transactions');resetTx();$('txTitle').focus()});
+ $('exportBtn').addEventListener('click',exportData);$('exportBtn2').addEventListener('click',exportData);
+ $('importBtn').addEventListener('click',()=>$('importFile').click());
+ $('importFile').addEventListener('change',importData);
+ $('clearAll').addEventListener('click',()=>{if(confirm('Effacer définitivement toutes vos opérations et projets synchronisés ?')){data={transactions:[],projects:[]};save();resetTx();resetProject()}});
+ $('resetFilters').addEventListener('click',()=>{$('monthFilter').value='all';$('scopeFilter').value='all';renderDashboard()});
+ renderAll();
+}
+function switchTab(tab){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));window.scrollTo({top:0,behavior:'smooth'});}
+function fillCategories(){const list=CATS[$('txType').value];$('txCategory').innerHTML='';list.forEach(x=>$('txCategory').add(new Option(x,x)))}
+function submitTx(e){e.preventDefault();const id=$('txId').value||uid();const tx={id,date:$('txDate').value,type:$('txType').value,scope:$('txScope').value,category:$('txCategory').value,title:$('txTitle').value.trim(),amount:Number($('txAmount').value),status:$('txStatus').value,note:$('txNote').value.trim()};if(!tx.date||!tx.title||tx.amount<=0)return;const i=data.transactions.findIndex(t=>t.id===id);if(i>=0)data.transactions[i]=tx;else data.transactions.push(tx);data.transactions.sort((a,b)=>b.date.localeCompare(a.date));resetTx();save();switchTab('dashboard')}
+function resetTx(){$('txForm').reset();$('txId').value='';$('txDate').value=dateToday();$('txStatus').value='Réalisé';$('formTitle').textContent='Ajouter une opération';fillCategories()}
+function editTx(id){const t=data.transactions.find(x=>x.id===id);if(!t)return;switchTab('transactions');$('txId').value=t.id;$('txDate').value=t.date;$('txType').value=t.type;$('txScope').value=t.scope;fillCategories();$('txCategory').value=t.category;$('txTitle').value=t.title;$('txAmount').value=t.amount;$('txStatus').value=t.status;$('txNote').value=t.note||'';$('formTitle').textContent='Modifier une opération';window.scrollTo({top:0,behavior:'smooth'})}
+function deleteTx(id){if(confirm('Supprimer cette opération ?')){data.transactions=data.transactions.filter(t=>t.id!==id);save()}}
+function filtered(){const year=+$('yearFilter').value,month=$('monthFilter').value,scope=$('scopeFilter').value;return data.transactions.filter(t=>{const d=new Date(t.date+'T12:00:00');return d.getFullYear()===year&&(month==='all'||d.getMonth()===MONTHS.indexOf(month))&&(scope==='all'||t.scope===scope)})}
+function realized(list,type){return list.filter(t=>t.status==='Réalisé'&&(!type||t.type===type)).reduce((s,t)=>s+t.amount,0)}
+function renderDashboard(){
+ const list=filtered(),income=realized(list,'Revenu'),expense=realized(list,'Dépense'),need=data.projects.filter(p=>p.status!=='Terminé').reduce((s,p)=>s+Math.max(0,p.budget-p.funded),0);
+ $('incomeTotal').textContent=fmt(income);$('expenseTotal').textContent=fmt(expense);$('balanceTotal').textContent=fmt(income-expense);$('balanceTotal').className='value '+(income-expense<0?'red':'green');$('projectNeed').textContent=fmt(need);
+ const year=+$('yearFilter').value;let rows='';
+ for(let i=0;i<12;i++){const monthList=list.filter(t=>new Date(t.date+'T12:00:00').getMonth()===i);const a=realized(monthList,'Revenu'),b=realized(monthList,'Dépense'),max=Math.max(a,b,1);rows+=`<div class="barrow"><span>${MONTHS[i].slice(0,3)}</span><div style="display:grid;gap:4px"><div class="track"><div class="fill" style="width:${a/max*100}%"></div></div><div class="track"><div class="fill exp" style="width:${b/max*100}%"></div></div></div><span style="text-align:right">${short(a)} / ${short(b)}</span></div>`}
+ $('monthlyBars').innerHTML=rows||'<div class="empty">Aucune donnée pour cette période.</div>';
+ const planned=list.filter(t=>t.status==='Prévu').reduce((s,t)=>s+(t.type==='Revenu'?t.amount:-t.amount),0),pending=list.filter(t=>t.status==='En attente').length;
+ $('summary').innerHTML=`<p><b>Opérations enregistrées :</b> ${list.length}</p><p><b>Solde de la période :</b> <span class="${income-expense<0?'red':'green'}">${fmt(income-expense)}</span></p><p><b>Prévisions nettes :</b> ${fmt(planned)}</p><p><b>Opérations en attente :</b> ${pending}</p><p><b>Projets actifs :</b> ${data.projects.filter(p=>p.status!=='Terminé').length}</p>`;
+ $('tip').textContent=list.length? (income-expense<0?'Attention : vos dépenses réalisées dépassent vos revenus sur cette période.':'Votre tableau de bord est à jour. Vérifiez les opérations en attente et les budgets de projets.'):'Ajoutez votre première opération pour commencer à voir vos données.';
+ const recent=[...list].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);$('recentTable').innerHTML=txTable(recent,false);
+}
+function short(n){n=Number(n)||0;if(n>=1000000)return (n/1000000).toFixed(1).replace('.',',')+' M';if(n>=1000)return (n/1000).toFixed(0)+' k';return String(n)}
+function txTable(list,withActions){if(!list.length)return '<div class="empty">Aucune opération à afficher.</div>';return `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Libellé</th><th>Type</th><th>Montant</th><th>Statut</th>${withActions?'<th>Actions</th>':''}</tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.date)}</td><td><b>${esc(t.title)}</b><div class="small">${esc(t.category)} · ${esc(t.scope)}</div></td><td><span class="pill ${t.type==='Revenu'?'rev':'dep'}">${esc(t.type)}</span></td><td class="amount ${t.type==='Revenu'?'green':'red'}">${t.type==='Dépense'?'−':'+'}${fmt(t.amount)}</td><td><span class="pill ${t.status==='Prévu'||t.status==='En attente'?'prev':''}">${esc(t.status)}</span></td>${withActions?`<td><button class="secondary" onclick="editTx('${t.id}')">Modifier</button> <button class="delete" onclick="deleteTx('${t.id}')">Supprimer</button></td>`:''}</tr>`).join('')}</tbody></table></div>`}
+function renderTransactions(){let list=[...data.transactions].sort((a,b)=>b.date.localeCompare(a.date));const q=$('searchTx').value.toLowerCase().trim(),type=$('typeTxFilter').value,status=$('statusTxFilter').value;list=list.filter(t=>(!q||(t.title+' '+t.category+' '+(t.note||'')).toLowerCase().includes(q))&&(type==='all'||t.type===type)&&(status==='all'||t.status===status));$('txCount').textContent=list.length+' opération(s)';$('allTransactions').innerHTML=txTable(list,true)}
+function submitProject(e){e.preventDefault();const id=$('projectId').value||uid();const p={id,name:$('projectName').value.trim(),scope:$('projectScope').value,priority:$('projectPriority').value,budget:Number($('projectBudget').value),funded:Number($('projectFunded').value),date:$('projectDate').value,status:$('projectStatus').value,note:$('projectNote').value.trim()};const i=data.projects.findIndex(x=>x.id===id);if(i>=0)data.projects[i]=p;else data.projects.push(p);resetProject();save()}
+function resetProject(){$('projectForm').reset();$('projectId').value='';$('projectFunded').value=0;$('projectFormTitle').textContent='Ajouter un projet'}
+function editProject(id){const p=data.projects.find(x=>x.id===id);if(!p)return;$('projectId').value=p.id;$('projectName').value=p.name;$('projectScope').value=p.scope;$('projectPriority').value=p.priority;$('projectBudget').value=p.budget;$('projectFunded').value=p.funded;$('projectDate').value=p.date||'';$('projectStatus').value=p.status;$('projectNote').value=p.note||'';$('projectFormTitle').textContent='Modifier le projet';window.scrollTo({top:0,behavior:'smooth'})}
+function deleteProject(id){if(confirm('Supprimer ce projet ?')){data.projects=data.projects.filter(p=>p.id!==id);save()}}
+function renderProjects(){$('projectCount').textContent=data.projects.length+' projet(s)';if(!data.projects.length){$('projectList').innerHTML='<div class="empty">Aucun projet enregistré. Ajoutez un projet ci-dessus.</div>';return}$('projectList').innerHTML=data.projects.map(p=>{const rest=Math.max(0,p.budget-p.funded),pct=p.budget?Math.min(100,p.funded/p.budget*100):0;return `<div class="project"><div class="project-top"><div><h3>${esc(p.name)}</h3><p>${esc(p.scope)} · Priorité ${esc(p.priority)} · ${esc(p.status)} ${p.date?'· échéance '+esc(p.date):''}</p></div><div style="text-align:right;font-weight:800">${fmt(rest)}<div class="small">reste à financer</div></div></div><div class="progress"><div style="width:${pct}%"></div></div><div class="small">${fmt(p.funded)} financés sur ${fmt(p.budget)} (${Math.round(pct)} %)</div>${p.note?`<p>${esc(p.note)}</p>`:''}<div class="actions" style="margin-top:10px"><button class="secondary" onclick="editProject('${p.id}')">Modifier</button><button class="delete" onclick="deleteProject('${p.id}')">Supprimer</button></div></div>`}).join('')}
+function renderAll(){refreshYearOptions();renderDashboard();renderTransactions();renderProjects()}
+function refreshYearOptions(){const old=$('yearFilter').value;const years=new Set([new Date().getFullYear()]);data.transactions.forEach(t=>{if(t.date)years.add(+t.date.slice(0,4))});$('yearFilter').innerHTML='';[...years].sort((a,b)=>b-a).forEach(y=>$('yearFilter').add(new Option(y,y)));$('yearFilter').value=years.has(+old)?old:String(new Date().getFullYear())}
+function exportData(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),...data},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-finances-'+dateToday()+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const p=JSON.parse(reader.result);if(!Array.isArray(p.transactions)||!Array.isArray(p.projects))throw new Error('Format non reconnu');if(confirm('Importer cette sauvegarde et remplacer les données actuelles ?')){data={transactions:p.transactions,projects:p.projects};save();alert('Sauvegarde importée.')}}catch(err){alert('Impossible de lire cette sauvegarde. Vérifiez que vous avez choisi le bon fichier JSON.')}e.target.value=''};reader.readAsText(f)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+loadLocal();setup();
+$('authSubmit').addEventListener('click',submitAuth);$('authPassword').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth()});$('authMode').addEventListener('click',()=>{authMode=authMode==='login'?'signup':'login';$('authTitle').textContent=authMode==='signup'?'Créer un compte':'Connexion';$('authHelp').textContent=authMode==='signup'?'Créez votre compte personnel sécurisé.':'Connectez-vous pour accéder à vos données synchronisées.';$('authSubmit').textContent=authMode==='signup'?'Créer mon compte':'Se connecter';$('authMode').textContent=authMode==='signup'?'J’ai déjà un compte':'Créer un compte';$('authPassword').autocomplete=authMode==='signup'?'new-password':'current-password';setAuthError('')});
+$('forgotPassword').addEventListener('click',async()=>{if(!sb){setAuthError('Configurez d’abord Supabase.');return}const email=$('authEmail').value.trim();if(!email){setAuthError('Entrez votre e-mail pour recevoir le lien de récupération.');return}const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});setAuthError(error?error.message:'Si cette adresse est enregistrée, un e-mail de récupération va être envoyé.')});
+$('signOutBtn').addEventListener('click',async()=>{if(sb)await sb.auth.signOut();currentUser=null;cloudReady=false;if(remoteChannel)sb.removeChannel(remoteChannel);$('accountLabel').textContent='Déconnecté';$('signOutBtn').style.display='none';data={transactions:[],projects:[]};renderAll();showAuth(true)});
+authStart();
+</script>
+</body>
+</html>
