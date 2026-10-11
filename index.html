@@ -136,7 +136,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 let data={transactions:[],projects:[]};
 const $=id=>document.getElementById(id);
 // Renseigner ces deux valeurs après création du projet Supabase.
-const SUPABASE_URL='https://wucdwohenllysyxyyrhap.supabase.co';
+const SUPABASE_URL='https://wucdwohenllysxyyrhap.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_P4bUi7BvaWgnt52lSBGwfg_KVZUZSob';
 let sb=null, currentUser=null, authMode='login', cloudReady=false, savingTimer=null, remoteChannel=null;
 function cloudConfigured(){return SUPABASE_URL.startsWith('https://') && (SUPABASE_ANON_KEY.startsWith('eyJ') || SUPABASE_ANON_KEY.startsWith('sb_publishable_')) && !SUPABASE_URL.includes('COLLER_ICI') && !SUPABASE_ANON_KEY.includes('COLLER_ICI')}
