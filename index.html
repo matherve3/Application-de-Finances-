@@ -36,7 +36,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{g
   <div class="actions"><span class="account" id="accountLabel">Mode hors connexion</span><button class="secondary" id="signOutBtn" style="display:none">Déconnexion</button><button class="secondary" id="exportBtn">Exporter une sauvegarde</button><button class="primary" id="addTop">+ Ajouter une opération</button></div>
 </header>
 <nav class="nav">
-  <button class="active" data-tab="dashboard">Vue d’ensemble</button><button data-tab="transactions">Opérations</button><button data-tab="reports">Rapports</button><button data-tab="projects">Mes projets</button><button data-tab="settings">Sauvegarde & aide</button>
+  <button class="active" data-tab="dashboard">Vue d’ensemble</button><button data-tab="transactions">Opérations</button><button data-tab="reports">Rapports</button><button data-tab="savings">Épargne</button><button data-tab="projects">Mes projets</button><button data-tab="settings">Sauvegarde & aide</button>
 </nav>
 <div class="notice" id="syncNotice">Connexion cloud non configurée. Suivez le guide INSTALLATION.md pour activer la synchronisation sécurisée.</div>
 
@@ -84,6 +84,32 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{g
     </div>
     <div id="allTransactions"></div>
   </div>
+</section>
+
+
+<section id="savings" class="panel">
+  <div class="section" style="margin-bottom:14px">
+    <div class="section-head"><h2>Créer un compte d’épargne</h2><span class="small">Comptes personnels · FCFA</span></div>
+    <form id="savingsAccountForm">
+      <div class="field"><label for="savingsName">NOM DU COMPTE</label><input id="savingsName" placeholder="Ex. Épargne d’urgence" required></div>
+      <div class="field"><label for="savingsInstitution">BANQUE / ÉTABLISSEMENT (facultatif)</label><input id="savingsInstitution" placeholder="Ex. Banque, mobile money…"></div>
+      <div class="field"><label for="savingsOpening">SOLDE DE DÉPART (FCFA)</label><input id="savingsOpening" type="number" min="0" step="1" value="0" required></div>
+      <div class="form-actions full"><button class="primary" type="submit">Créer le compte d’épargne</button></div>
+    </form>
+  </div>
+  <div class="section" style="margin-bottom:14px">
+    <div class="section-head"><h2>Enregistrer un mouvement</h2><span class="small">Dépôt ou retrait</span></div>
+    <form id="savingsMovementForm">
+      <div class="field full"><label for="savingsAccountSelect">COMPTE D’ÉPARGNE</label><select id="savingsAccountSelect" required><option value="">Créez d’abord un compte</option></select></div>
+      <div class="field"><label for="savingsMovementDate">DATE</label><input id="savingsMovementDate" type="date" required></div>
+      <div class="field"><label for="savingsMovementType">TYPE DE MOUVEMENT</label><select id="savingsMovementType"><option value="deposit">Dépôt</option><option value="withdrawal">Retrait</option></select></div>
+      <div class="field"><label for="savingsMovementAmount">MONTANT (FCFA)</label><input id="savingsMovementAmount" type="number" min="1" step="1" required></div>
+      <div class="field"><label for="savingsMovementNote">NOTE (facultatif)</label><input id="savingsMovementNote" placeholder="Ex. Versement mensuel"></div>
+      <div class="form-actions full"><button class="primary" type="submit">Enregistrer le mouvement</button></div>
+    </form>
+  </div>
+  <div class="section"><div class="section-head"><h2>Mes comptes d’épargne</h2><span class="small" id="savingsTotal">Total : 0 FCFA</span></div><div id="savingsAccountsList" class="project-list"></div></div>
+  <div class="section" style="margin-top:14px"><h2>Historique des mouvements</h2><div id="savingsHistory"></div></div>
 </section>
 
 <section id="projects" class="panel">
@@ -134,7 +160,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{g
       <li>Dans <b>Opérations</b>, saisissez chaque revenu ou dépense dès qu’il survient.</li>
       <li>Choisissez « Réalisé » pour une opération déjà effectuée, ou « Prévu » pour une estimation future.</li>
       <li>Dans <b>Vue d’ensemble</b>, changez l’année, le mois et le périmètre pour filtrer les résultats.</li>
-      <li>Dans <b>Mes projets</b>, indiquez le budget et le montant déjà financé ; le reste à financer est calculé automatiquement.</li>
+      <li>Dans <b>Épargne</b>, créez des comptes, puis enregistrez les dépôts et retraits. Le solde est calculé automatiquement. Dans <b>Mes projets</b>, indiquez le budget et le montant déjà financé ; le reste à financer est calculé automatiquement.</li>
       <li>Exportez régulièrement une sauvegarde et gardez-la dans Google Drive ou un autre espace sûr.</li>
     </ol>
     <h2 style="margin-top:24px">Réinitialiser</h2>
@@ -152,12 +178,7 @@ const CATS={
 const fmt=n=>new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Number(n)||0)+' FCFA';
 const dateToday=()=>new Date().toISOString().slice(0,10);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-let data={
-  transactions:[],
-  projects:[],
-  savingsAccounts:[],
-  savingsMovements:[]
-};
+let data={transactions:[],projects:[],savingsAccounts:[]};
 const $=id=>document.getElementById(id);
 // Renseigner ces deux valeurs après création du projet Supabase.
 const SUPABASE_URL='https://wucdwohenllysxyyrhap.supabase.co';
@@ -167,77 +188,11 @@ function cloudConfigured(){return SUPABASE_URL.startsWith('https://') && (SUPABA
 function setSyncMessage(msg,warning=false){const n=$('syncNotice');if(n){n.textContent=msg;n.style.background=warning?'#fff8e9':'var(--mint)';n.style.color=warning?'#76501d':'var(--green)'}}
 function setAuthError(msg){$('authError').textContent=msg||''}
 function showAuth(show){$('authWrap').style.display=show?'flex':'none'}
-
-function loadLocal(){
-  try {
-    const s = localStorage.getItem('pilotageFinancierV1');
-    if(s){
-      const p = JSON.parse(s);
-      data = {
-        transactions: Array.isArray(p.transactions) ? p.transactions : [],
-        projects: Array.isArray(p.projects) ? p.projects : [],
-        savingsAccounts: Array.isArray(p.savingsAccounts) ? p.savingsAccounts : [],
-        savingsMovements: Array.isArray(p.savingsMovements) ? p.savingsMovements : []
-      };
-    }
-  } catch(e) {
-    console.warn(e);
-  }
-}
-
-
-async function loadCloud() {
-  if (!sb || !currentUser) return;
-
-  setSyncMessage('Chargement de vos données sécurisées…');
-
-  try {
-    const { data: row, error } = await sb
-      .from('user_finance_data')
-      .select('payload')
-      .eq('user_id', currentUser.id)
-      .maybeSingle();
-
-    if (error) {
-      setSyncMessage('Erreur de lecture cloud : ' + error.message, true);
-      return;
-    }
-
-    if (row?.payload) {
-      data = {
-        transactions: Array.isArray(row.payload.transactions)
-          ? row.payload.transactions : [],
-        projects: Array.isArray(row.payload.projects)
-          ? row.payload.projects : [],
-        savingsAccounts: Array.isArray(row.payload.savingsAccounts)
-          ? row.payload.savingsAccounts : [],
-        savingsMovements: Array.isArray(row.payload.savingsMovements)
-          ? row.payload.savingsMovements : []
-      };
-
-      try {
-        localStorage.setItem('pilotageFinancierV1', JSON.stringify(data));
-      } catch (e) {}
-    }
-
-    cloudReady = true;
-    renderAll();
-
-    if (!row) {
-      setSyncMessage('Aucune sauvegarde cloud trouvée. Ajoutez une opération pour commencer.', true);
-    } else {
-      setSyncMessage('Données chargées depuis le cloud.');
-    }
-
-    subscribeRealtime();
-
-  } catch (e) {
-    setSyncMessage('Erreur de chargement : ' + e.message, true);
-  }
-}
+function loadLocal(){try{const s=localStorage.getItem('pilotageFinancierV1');if(s){const p=JSON.parse(s);data={transactions:Array.isArray(p.transactions)?p.transactions:[],projects:Array.isArray(p.projects)?p.projects:[],savingsAccounts:Array.isArray(p.savingsAccounts)?p.savingsAccounts:[]}}}catch(e){console.warn(e)}}
+async function loadCloud(){if(!sb||!currentUser)return;setSyncMessage('Chargement de vos données sécurisées…');const {data:row,error}=await sb.from('user_finance_data').select('payload').eq('user_id',currentUser.id).maybeSingle();if(error){setSyncMessage('Erreur de lecture cloud : '+error.message,true);return}if(row?.payload){data={transactions:Array.isArray(row.payload.transactions)?row.payload.transactions:[],projects:Array.isArray(row.payload.projects)?row.payload.projects:[],savingsAccounts:Array.isArray(row.payload.savingsAccounts)?row.payload.savingsAccounts:[]}}else{data={transactions:[],projects:[],savingsAccounts:[]};await persistCloud()}cloudReady=true;renderAll();setSyncMessage('Synchronisé avec le cloud. Vos données sont liées à votre compte personnel.');subscribeRealtime()}
 async function persistCloud(){try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();if(sb&&currentUser&&cloudReady){clearTimeout(savingTimer);setSyncMessage('Synchronisation…');savingTimer=setTimeout(async()=>{const {error}=await sb.from('user_finance_data').upsert({user_id:currentUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)setSyncMessage('Synchronisation échouée : '+error.message,true);else setSyncMessage('Synchronisé · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));},250)}}
 function save(){persistCloud()}
-function subscribeRealtime(){if(!sb||!currentUser)return;if(remoteChannel)sb.removeChannel(remoteChannel);remoteChannel=sb.channel('finance-'+currentUser.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'user_finance_data',filter:'user_id=eq.'+currentUser.id},payload=>{if(!payload.new||!payload.new.payload)return;data={transactions:payload.new.payload.transactions||[],projects:payload.new.payload.projects||[]};try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();setSyncMessage('Mise à jour reçue depuis un autre appareil.')}).subscribe()}
+function subscribeRealtime(){if(!sb||!currentUser)return;if(remoteChannel)sb.removeChannel(remoteChannel);remoteChannel=sb.channel('finance-'+currentUser.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'user_finance_data',filter:'user_id=eq.'+currentUser.id},payload=>{if(!payload.new||!payload.new.payload)return;data={transactions:payload.new.payload.transactions||[],projects:payload.new.payload.projects||[],savingsAccounts:payload.new.payload.savingsAccounts||[]};try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();setSyncMessage('Mise à jour reçue depuis un autre appareil.')}).subscribe()}
 async function authStart(){if(!cloudConfigured()){showAuth(true);setAuthError('Configuration nécessaire : ouvrez app.js et remplacez l’URL Supabase et la clé publique.');$('authSubmit').disabled=true;$('authMode').disabled=true;return}sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){authMode='recovery';$('authTitle').textContent='Nouveau mot de passe';$('authHelp').textContent='Choisissez un nouveau mot de passe sécurisé.';$('authSubmit').textContent='Enregistrer le mot de passe';$('authMode').style.display='none';showAuth(true)}});const {data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;await afterLogin();}else showAuth(true);}
 async function afterLogin(){currentUser=(await sb.auth.getUser()).data.user;if(!currentUser)return;cloudReady=false;$('accountLabel').textContent=currentUser.email||'Compte connecté';$('signOutBtn').style.display='inline-block';showAuth(false);await loadCloud()}
 async function submitAuth(){setAuthError('');const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthError('Renseignez votre e-mail et votre mot de passe.');return}const btn=$('authSubmit');btn.disabled=true;try{let result;if(authMode==='recovery')result=await sb.auth.updateUser({password});else if(authMode==='signup')result=await sb.auth.signUp({email,password});else result=await sb.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(authMode==='recovery'){authMode='login';$('authMode').style.display='inline-block';$('authPassword').value='';setAuthError('Mot de passe modifié. Vous pouvez maintenant vous connecter.');$('authTitle').textContent='Connexion';$('authSubmit').textContent='Se connecter';}else if(authMode==='signup'&&!result.data.session){setAuthError('Compte créé. Vérifiez votre e-mail pour confirmer votre inscription, puis connectez-vous.')}else await afterLogin()}catch(e){setAuthError(e.message||'Connexion impossible. Vérifiez vos informations.')}finally{btn.disabled=false}}
@@ -257,11 +212,12 @@ function setup(){
  $('txType').addEventListener('change',fillCategories);
  $('txForm').addEventListener('submit',submitTx); $('cancelEdit').addEventListener('click',resetTx);
  $('projectForm').addEventListener('submit',submitProject); $('cancelProject').addEventListener('click',resetProject);
+ $('savingsAccountForm').addEventListener('submit',createSavingsAccount);$('savingsMovementForm').addEventListener('submit',submitSavingsMovement);$('savingsMovementDate').value=dateToday();
  $('addTop').addEventListener('click',()=>{switchTab('transactions');resetTx();$('txTitle').focus()});
  $('exportBtn').addEventListener('click',exportData);$('exportBtn2').addEventListener('click',exportData);
  $('importBtn').addEventListener('click',()=>$('importFile').click());
  $('importFile').addEventListener('change',importData);
- $('clearAll').addEventListener('click',()=>{if(confirm('Effacer définitivement toutes vos opérations et projets synchronisés ?')){data={transactions:[],projects:[]};save();resetTx();resetProject()}});
+ $('clearAll').addEventListener('click',()=>{if(confirm('Effacer définitivement toutes vos opérations et projets synchronisés ?')){data={transactions:[],projects:[],savingsAccounts:[]};save();resetTx();resetProject()}});
  $('resetFilters').addEventListener('click',()=>{$('monthFilter').value='all';$('scopeFilter').value='all';renderDashboard()});
  renderAll();renderReports();
 }
@@ -292,14 +248,22 @@ function resetProject(){$('projectForm').reset();$('projectId').value='';$('proj
 function editProject(id){const p=data.projects.find(x=>x.id===id);if(!p)return;$('projectId').value=p.id;$('projectName').value=p.name;$('projectScope').value=p.scope;$('projectPriority').value=p.priority;$('projectBudget').value=p.budget;$('projectFunded').value=p.funded;$('projectDate').value=p.date||'';$('projectStatus').value=p.status;$('projectNote').value=p.note||'';$('projectFormTitle').textContent='Modifier le projet';window.scrollTo({top:0,behavior:'smooth'})}
 function deleteProject(id){if(confirm('Supprimer ce projet ?')){data.projects=data.projects.filter(p=>p.id!==id);save()}}
 function renderProjects(){$('projectCount').textContent=data.projects.length+' projet(s)';if(!data.projects.length){$('projectList').innerHTML='<div class="empty">Aucun projet enregistré. Ajoutez un projet ci-dessus.</div>';return}$('projectList').innerHTML=data.projects.map(p=>{const rest=Math.max(0,p.budget-p.funded),pct=p.budget?Math.min(100,p.funded/p.budget*100):0;return `<div class="project"><div class="project-top"><div><h3>${esc(p.name)}</h3><p>${esc(p.scope)} · Priorité ${esc(p.priority)} · ${esc(p.status)} ${p.date?'· échéance '+esc(p.date):''}</p></div><div style="text-align:right;font-weight:800">${fmt(rest)}<div class="small">reste à financer</div></div></div><div class="progress"><div style="width:${pct}%"></div></div><div class="small">${fmt(p.funded)} financés sur ${fmt(p.budget)} (${Math.round(pct)} %)</div>${p.note?`<p>${esc(p.note)}</p>`:''}<div class="actions" style="margin-top:10px"><button class="secondary" onclick="editProject('${p.id}')">Modifier</button><button class="delete" onclick="deleteProject('${p.id}')">Supprimer</button></div></div>`}).join('')}
-function renderAll(){refreshYearOptions();renderDashboard();renderTransactions();renderProjects();renderReports()}
+function renderAll(){refreshYearOptions();renderDashboard();renderTransactions();renderProjects();renderReports();renderSavings()}
+
+
+function createSavingsAccount(e){e.preventDefault();const name=$('savingsName').value.trim(),opening=Number($('savingsOpening').value);if(!name||!Number.isFinite(opening)||opening<0)return;data.savingsAccounts=data.savingsAccounts||[];data.savingsAccounts.push({id:uid(),name,institution:$('savingsInstitution').value.trim(),openingBalance:opening,createdAt:dateToday(),movements:[]});$('savingsAccountForm').reset();$('savingsOpening').value='0';save();}
+function submitSavingsMovement(e){e.preventDefault();const account=(data.savingsAccounts||[]).find(a=>a.id===$('savingsAccountSelect').value),amount=Number($('savingsMovementAmount').value),type=$('savingsMovementType').value,date=$('savingsMovementDate').value;if(!account||!date||!Number.isFinite(amount)||amount<=0)return;account.movements=Array.isArray(account.movements)?account.movements:[];const balance=Number(account.openingBalance||0)+account.movements.reduce((sum,m)=>sum+(m.type==='deposit'?Number(m.amount):-Number(m.amount)),0);if(type==='withdrawal'&&amount>balance){alert('Solde insuffisant pour effectuer ce retrait.');return}account.movements.push({id:uid(),date,type,amount,note:$('savingsMovementNote').value.trim()});account.movements.sort((a,b)=>b.date.localeCompare(a.date));$('savingsMovementForm').reset();$('savingsMovementDate').value=dateToday();save();}
+function savingsBalance(a){return Number(a.openingBalance||0)+(a.movements||[]).reduce((sum,m)=>sum+(m.type==='deposit'?Number(m.amount):-Number(m.amount)),0)}
+function deleteSavingsAccount(id){if(confirm('Supprimer ce compte d’épargne et son historique ?')){data.savingsAccounts=(data.savingsAccounts||[]).filter(a=>a.id!==id);save()}}
+function deleteSavingsMovement(accountId,movementId){if(!confirm('Supprimer ce mouvement ?'))return;const a=(data.savingsAccounts||[]).find(x=>x.id===accountId);if(a)a.movements=(a.movements||[]).filter(m=>m.id!==movementId);save()}
+function renderSavings(){const accounts=data.savingsAccounts||[];const select=$('savingsAccountSelect');if(!select)return;const previous=select.value;select.innerHTML='';if(!accounts.length)select.add(new Option('Créez d’abord un compte',''));else accounts.forEach(a=>select.add(new Option(a.name,a.id)));if(accounts.some(a=>a.id===previous))select.value=previous;const total=accounts.reduce((s,a)=>s+savingsBalance(a),0);$('savingsTotal').textContent='Total : '+fmt(total);$('savingsAccountsList').innerHTML=accounts.length?accounts.map(a=>`<div class="project"><div class="project-top"><div><h3>${esc(a.name)}</h3><p>${esc(a.institution||'Épargne personnelle')} · Créé le ${esc(a.createdAt||'')}</p></div><div style="text-align:right;font-weight:800" class="green">${fmt(savingsBalance(a))}<div class="small">solde actuel</div></div></div><div class="actions" style="margin-top:10px"><button class="delete" onclick="deleteSavingsAccount('${a.id}')">Supprimer le compte</button></div></div>`).join(''):'<div class="empty">Aucun compte d’épargne. Créez votre premier compte ci-dessus.</div>';const movements=accounts.flatMap(a=>(a.movements||[]).map(m=>({...m,accountName:a.name,accountId:a.id}))).sort((a,b)=>b.date.localeCompare(a.date));$('savingsHistory').innerHTML=movements.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Compte</th><th>Mouvement</th><th>Montant</th><th>Note</th><th>Action</th></tr></thead><tbody>${movements.map(m=>`<tr><td>${esc(m.date)}</td><td>${esc(m.accountName)}</td><td><span class="pill ${m.type==='deposit'?'rev':'dep'}">${m.type==='deposit'?'Dépôt':'Retrait'}</span></td><td class="amount ${m.type==='deposit'?'green':'red'}">${m.type==='deposit'?'+':'−'}${fmt(m.amount)}</td><td>${esc(m.note||'—')}</td><td><button class="delete" onclick="deleteSavingsMovement('${m.accountId}','${m.id}')">Supprimer</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Aucun mouvement enregistré.</div>';}
 
 function reportTransactions(){const year=+$('reportYear').value,month=$('reportMonth').value,scope=$('reportScope').value;return data.transactions.filter(t=>{if(!t.date)return false;const d=new Date(t.date+'T12:00:00');return d.getFullYear()===year&&(month==='all'||d.getMonth()===Number(month))&&(scope==='all'||t.scope===scope)})}
 function renderReports(){if(!$('reportYear'))return;const list=reportTransactions(),done=list.filter(t=>t.status==='Réalisé'),income=realized(done,'Revenu'),expense=realized(done,'Dépense'),balance=income-expense;$('reportIncome').textContent=fmt(income);$('reportExpense').textContent=fmt(expense);$('reportBalance').textContent=fmt(balance);$('reportBalance').className='value '+(balance<0?'red':'green');$('reportCount').textContent=String(list.length);const month=$('reportMonth').value;let rows='';if(month==='all'){$('reportTableTitle').textContent='Bilan mensuel — '+$('reportYear').value;for(let i=0;i<12;i++){const m=done.filter(t=>new Date(t.date+'T12:00:00').getMonth()===i),a=realized(m,'Revenu'),b=realized(m,'Dépense');rows+=`<tr><td>${MONTHS[i]}</td><td class="amount green">${fmt(a)}</td><td class="amount red">${fmt(b)}</td><td class="amount ${a-b<0?'red':'green'}">${fmt(a-b)}</td><td>${m.length}</td></tr>`}}else{$('reportTableTitle').textContent='Détail des opérations — '+MONTHS[Number(month)]+' '+$('reportYear').value;const selected=list.filter(t=>new Date(t.date+'T12:00:00').getMonth()===Number(month)).sort((a,b)=>b.date.localeCompare(a.date));rows=selected.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.title)}</td><td>${esc(t.category)}</td><td>${esc(t.type)}</td><td>${esc(t.status)}</td><td class="amount">${fmt(t.amount)}</td></tr>`).join('');if(!rows)rows='<tr><td colspan="6">Aucune opération pour ce mois.</td></tr>';$('reportTable').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Type</th><th>Statut</th><th>Montant</th></tr></thead><tbody>${rows}</tbody></table></div>`;return}$('reportTable').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Mois</th><th>Revenus</th><th>Dépenses</th><th>Solde</th><th>Opérations réalisées</th></tr></thead><tbody>${rows}</tbody></table></div>`}
 function exportReport(){const list=reportTransactions(),month=$('reportMonth').value,done=list.filter(t=>t.status==='Réalisé');let lines=[['Date','Libellé','Type','Catégorie','Périmètre','Statut','Montant FCFA']];done.forEach(t=>lines.push([t.date,t.title,t.type,t.category,t.scope,t.status,t.amount]));if(month==='all'){lines.push([]);lines.push(['Bilan mensuel','Revenus FCFA','Dépenses FCFA','Solde FCFA']);for(let i=0;i<12;i++){const m=done.filter(t=>new Date(t.date+'T12:00:00').getMonth()===i),a=realized(m,'Revenu'),b=realized(m,'Dépense');lines.push([MONTHS[i],a,b,a-b])}}const csv='\ufeff'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='rapport-financier-'+$('reportYear').value+'-'+(month==='all'?'annuel':String(Number(month)+1).padStart(2,'0'))+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function refreshYearOptions(){const old=$('yearFilter').value;const years=new Set([new Date().getFullYear()]);data.transactions.forEach(t=>{if(t.date)years.add(+t.date.slice(0,4))});$('yearFilter').innerHTML='';[...years].sort((a,b)=>b-a).forEach(y=>$('yearFilter').add(new Option(y,y)));$('yearFilter').value=years.has(+old)?old:String(new Date().getFullYear())}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),...data},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-finances-'+dateToday()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function importData(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const p=JSON.parse(reader.result);if(!Array.isArray(p.transactions)||!Array.isArray(p.projects))throw new Error('Format non reconnu');if(confirm('Importer cette sauvegarde et remplacer les données actuelles ?')){data={transactions:p.transactions,projects:p.projects};save();alert('Sauvegarde importée.')}}catch(err){alert('Impossible de lire cette sauvegarde. Vérifiez que vous avez choisi le bon fichier JSON.')}e.target.value=''};reader.readAsText(f)}
+function importData(e){const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const p=JSON.parse(reader.result);if(!Array.isArray(p.transactions)||!Array.isArray(p.projects))throw new Error('Format non reconnu');if(confirm('Importer cette sauvegarde et remplacer les données actuelles ?')){data={transactions:p.transactions,projects:p.projects,savingsAccounts:Array.isArray(p.savingsAccounts)?p.savingsAccounts:[]};save();alert('Sauvegarde importée.')}}catch(err){alert('Impossible de lire cette sauvegarde. Vérifiez que vous avez choisi le bon fichier JSON.')}e.target.value=''};reader.readAsText(f)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 loadLocal();setup();
 $('authSubmit').addEventListener('click',submitAuth);$('authPassword').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth()});$('authMode').addEventListener('click',()=>{authMode=authMode==='login'?'signup':'login';$('authTitle').textContent=authMode==='signup'?'Créer un compte':'Connexion';$('authHelp').textContent=authMode==='signup'?'Créez votre compte personnel sécurisé.':'Connectez-vous pour accéder à vos données synchronisées.';$('authSubmit').textContent=authMode==='signup'?'Créer mon compte':'Se connecter';$('authMode').textContent=authMode==='signup'?'J’ai déjà un compte':'Créer un compte';$('authPassword').autocomplete=authMode==='signup'?'new-password':'current-password';setAuthError('')});
