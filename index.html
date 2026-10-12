@@ -152,7 +152,12 @@ const CATS={
 const fmt=n=>new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Number(n)||0)+' FCFA';
 const dateToday=()=>new Date().toISOString().slice(0,10);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-let data={transactions:[],projects:[]};
+let data={
+  transactions:[],
+  projects:[],
+  savingsAccounts:[],
+  savingsMovements:[]
+};
 const $=id=>document.getElementById(id);
 // Renseigner ces deux valeurs après création du projet Supabase.
 const SUPABASE_URL='https://wucdwohenllysxyyrhap.supabase.co';
@@ -162,8 +167,74 @@ function cloudConfigured(){return SUPABASE_URL.startsWith('https://') && (SUPABA
 function setSyncMessage(msg,warning=false){const n=$('syncNotice');if(n){n.textContent=msg;n.style.background=warning?'#fff8e9':'var(--mint)';n.style.color=warning?'#76501d':'var(--green)'}}
 function setAuthError(msg){$('authError').textContent=msg||''}
 function showAuth(show){$('authWrap').style.display=show?'flex':'none'}
-function loadLocal(){try{const s=localStorage.getItem('pilotageFinancierV1');if(s){const p=JSON.parse(s);data={transactions:Array.isArray(p.transactions)?p.transactions:[],projects:Array.isArray(p.projects)?p.projects:[]}}}catch(e){console.warn(e)}}
-async function loadCloud(){if(!sb||!currentUser)return;setSyncMessage('Chargement de vos données sécurisées…');const {data:row,error}=await sb.from('user_finance_data').select('payload').eq('user_id',currentUser.id).maybeSingle();if(error){setSyncMessage('Erreur de lecture cloud : '+error.message,true);return}if(row?.payload){data={transactions:Array.isArray(row.payload.transactions)?row.payload.transactions:[],projects:Array.isArray(row.payload.projects)?row.payload.projects:[]}}else{data={transactions:[],projects:[]};await persistCloud()}cloudReady=true;renderAll();setSyncMessage('Synchronisé avec le cloud. Vos données sont liées à votre compte personnel.');subscribeRealtime()}
+
+function loadLocal(){
+  try {
+    const s = localStorage.getItem('pilotageFinancierV1');
+    if(s){
+      const p = JSON.parse(s);
+      data = {
+        transactions: Array.isArray(p.transactions) ? p.transactions : [],
+        projects: Array.isArray(p.projects) ? p.projects : [],
+        savingsAccounts: Array.isArray(p.savingsAccounts) ? p.savingsAccounts : [],
+        savingsMovements: Array.isArray(p.savingsMovements) ? p.savingsMovements : []
+      };
+    }
+  } catch(e) {
+    console.warn(e);
+  }
+}
+
+
+async function loadCloud() {
+  if (!sb || !currentUser) return;
+
+  setSyncMessage('Chargement de vos données sécurisées…');
+
+  try {
+    const { data: row, error } = await sb
+      .from('user_finance_data')
+      .select('payload')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      setSyncMessage('Erreur de lecture cloud : ' + error.message, true);
+      return;
+    }
+
+    if (row?.payload) {
+      data = {
+        transactions: Array.isArray(row.payload.transactions)
+          ? row.payload.transactions : [],
+        projects: Array.isArray(row.payload.projects)
+          ? row.payload.projects : [],
+        savingsAccounts: Array.isArray(row.payload.savingsAccounts)
+          ? row.payload.savingsAccounts : [],
+        savingsMovements: Array.isArray(row.payload.savingsMovements)
+          ? row.payload.savingsMovements : []
+      };
+
+      try {
+        localStorage.setItem('pilotageFinancierV1', JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    cloudReady = true;
+    renderAll();
+
+    if (!row) {
+      setSyncMessage('Aucune sauvegarde cloud trouvée. Ajoutez une opération pour commencer.', true);
+    } else {
+      setSyncMessage('Données chargées depuis le cloud.');
+    }
+
+    subscribeRealtime();
+
+  } catch (e) {
+    setSyncMessage('Erreur de chargement : ' + e.message, true);
+  }
+}
 async function persistCloud(){try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();if(sb&&currentUser&&cloudReady){clearTimeout(savingTimer);setSyncMessage('Synchronisation…');savingTimer=setTimeout(async()=>{const {error}=await sb.from('user_finance_data').upsert({user_id:currentUser.id,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)setSyncMessage('Synchronisation échouée : '+error.message,true);else setSyncMessage('Synchronisé · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));},250)}}
 function save(){persistCloud()}
 function subscribeRealtime(){if(!sb||!currentUser)return;if(remoteChannel)sb.removeChannel(remoteChannel);remoteChannel=sb.channel('finance-'+currentUser.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'user_finance_data',filter:'user_id=eq.'+currentUser.id},payload=>{if(!payload.new||!payload.new.payload)return;data={transactions:payload.new.payload.transactions||[],projects:payload.new.payload.projects||[]};try{localStorage.setItem('pilotageFinancierV1',JSON.stringify(data))}catch(e){}renderAll();setSyncMessage('Mise à jour reçue depuis un autre appareil.')}).subscribe()}
